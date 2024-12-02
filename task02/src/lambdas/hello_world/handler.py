@@ -26,8 +26,8 @@ class HelloWorld(AbstractLambda):
     def handle_request(self, event, context):
         self.validate_request(event)
         return {
-            'statusCode': 200,
-            'message': 'Hello from Lambda'
+            "statusCode": 200,
+            "message": "Hello from Lambda"
         }
 
 
@@ -35,19 +35,15 @@ HANDLER = HelloWorld()
 
 def lambda_handler(event, context):
     try:
-        _LOG.info(f"Received event: {event}")
         response = HANDLER.handle_request(event, context)
-        _LOG.info(f"Response: {response}")
-        return response
-    except ApplicationException as e:
-        _LOG.error(f"ApplicationException occurred: {e.content}")
+        _LOG.info(f"response from handler: {response}")
         return {
-            'statusCode': e.code,
-            'message': e.content
+            "statusCode": 200,
+            "message": "Hello from Lambda"
         }
-    except Exception as e:
-        _LOG.error(f"Unexpected error: {e}", exc_info=True)
+    except ApplicationException as e:
+        _LOG.info(f"wrong path or method: statusCode:{e.code}, message:{e.content}")
         return {
-            'statusCode': 500,
-            'message': "An internal server error occurred."
+            "statusCode": e.code,
+            "message": e.content
         }
