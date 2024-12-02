@@ -10,7 +10,7 @@ class TestHelloWorldLambda(HelloWorldLambdaTestCase):
         }
         response = self.HANDLER.handle_request(event, dict())
         self.assertEqual(response["statusCode"], 200)
-        self.assertEqual(response["body"]["message"], "Hello from Lambda")
+        self.assertEqual(response["message"], "Hello from Lambda")
 
     def test_invalid_method(self):
         event = {
