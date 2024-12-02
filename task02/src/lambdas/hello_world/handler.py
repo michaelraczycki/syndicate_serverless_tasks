@@ -36,14 +36,13 @@ HANDLER = HelloWorld()
 def lambda_handler(event, context):
     try:
         response = HANDLER.handle_request(event, context)
-        _LOG.info(f"response from handler: {response}")
-        return {
-            "statusCode": 200,
-            "message": "Hello from Lambda"
-        }
+        _LOG.info(f"wrong path or method - response to return: {response}")
+        return response
     except ApplicationException as e:
         _LOG.info(f"wrong path or method: statusCode:{e.code}, message:{e.content}")
-        return {
+        response = {
             "statusCode": e.code,
             "message": e.content
         }
+        _LOG.info(f"wrong path or method - response to return: {response}")
+        return response
