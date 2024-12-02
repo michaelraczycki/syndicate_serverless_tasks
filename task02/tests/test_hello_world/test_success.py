@@ -1,4 +1,5 @@
-from commons.exception import ApplicationException  # Adjusted import
+import json
+from commons.exception import ApplicationException
 from tests.test_hello_world import HelloWorldLambdaTestCase
 
 class TestHelloWorldLambda(HelloWorldLambdaTestCase):
@@ -10,7 +11,11 @@ class TestHelloWorldLambda(HelloWorldLambdaTestCase):
         }
         response = self.HANDLER.handle_request(event, dict())
         self.assertEqual(response["statusCode"], 200)
-        self.assertEqual(response["message"], "Hello from Lambda")
+
+        # Parse the body and assert its contents
+        body = json.loads(response["body"])
+        self.assertEqual(body["statusCode"], 200)
+        self.assertEqual(body["message"], "Hello from Lambda")
 
     def test_invalid_method(self):
         event = {
@@ -19,6 +24,7 @@ class TestHelloWorldLambda(HelloWorldLambdaTestCase):
         }
         with self.assertRaises(ApplicationException) as context:
             self.HANDLER.handle_request(event, dict())
+
         exception = context.exception
         self.assertEqual(exception.code, 400)
         self.assertIn("Bad request syntax or unsupported method", exception.content)
@@ -31,6 +37,7 @@ class TestHelloWorldLambda(HelloWorldLambdaTestCase):
         }
         with self.assertRaises(ApplicationException) as context:
             self.HANDLER.handle_request(event, dict())
+
         exception = context.exception
         self.assertEqual(exception.code, 400)
         self.assertIn("Bad request syntax or unsupported method", exception.content)
