@@ -1,0 +1,14 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Deny",
+            "Principal": {
+                "AWS": "arn:aws:iam::905418349556:role/cmtr-7d4a8302-iam-peld-iam_role"
+            },
+            "Action": "s3:DeleteObject",
+            "Resource": "arn:aws:s3:::cmtr-7d4a8302-iam-peld-bucket-4564842/*"
+        }
+    ]
+}
