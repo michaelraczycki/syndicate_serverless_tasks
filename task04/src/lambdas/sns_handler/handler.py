@@ -10,10 +10,12 @@ class SnsHandler(AbstractLambda):
         pass
         
     def handle_request(self, event, context):
-        """
-        Explain incoming event here
-        """
-        # todo implement business logic
+        for record in event.get('Records', []):
+            try:
+                message = record['Sns']['Message']
+            except e:
+                _LOG.error(f"something went wrong {e}")
+            _LOG.info(f"Received SQS message: {message}")
         return 200
     
 
