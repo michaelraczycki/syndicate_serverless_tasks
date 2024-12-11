@@ -13,9 +13,9 @@ class SnsHandler(AbstractLambda):
         for record in event.get('Records', []):
             try:
                 message = record['Sns']['Message']
-            except e:
-                _LOG.error(f"something went wrong {e}")
-            _LOG.info(f"Received SQS message: {message}")
+                _LOG.info(f"Received SNS message: {message}")
+            except KeyError as e:
+                _LOG.error(f"Missing expected key in the record: {e}")
         return 200
     
 
