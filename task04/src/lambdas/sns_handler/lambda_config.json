@@ -12,7 +12,7 @@
   "event_sources": [
     {
       "resource_type": "sns_topic_trigger",
-      "target_topic": "async_queue",
+      "target_topic": "lambda_topic",
       "region": "eu-central-1"
     }
   ],
