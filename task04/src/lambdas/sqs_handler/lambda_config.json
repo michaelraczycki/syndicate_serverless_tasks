@@ -8,18 +8,12 @@
   "memory": 128,
   "timeout": 100,
   "lambda_path": "lambdas/sqs_handler",
-  "dependencies": [
-    {
-      "resource_name": "async_queue",
-      "resource_type": "sqs_queue"
-    }
-  ],
+  "dependencies": [],
   "event_sources": [
     {
       "resource_name": "sqs_trigger",
       "target_queue": "async_queue",
-      "batch_size": 50,
-      "region": "${region}"
+      "batch_size": 50
     }
   ],
   "env_variables": {},
