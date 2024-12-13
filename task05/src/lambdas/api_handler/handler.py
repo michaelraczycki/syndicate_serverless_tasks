@@ -35,7 +35,7 @@ class ApiHandler(AbstractLambda):
         }
 
         dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('region', 'eu-central-1'))
-        table_name = os.environ.get('table_name', 'Events')
+        table_name = os.environ.get('target_table')
         _LOG.info(msg=f"trying to get table: {table_name}")
 
         table = dynamodb.Table(table_name)

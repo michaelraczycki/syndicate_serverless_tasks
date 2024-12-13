@@ -12,7 +12,7 @@
   "event_sources": [],
   "env_variables": {
     "region": "${region}",
-    "table_name": "${resources_prefix}${target_table}"
+    "target_table": "${target_table}"
   },
   "publish_version": true,
   "alias": "${lambdas_alias_name}",
