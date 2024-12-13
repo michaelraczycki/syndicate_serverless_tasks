@@ -45,18 +45,7 @@
           "method_request_parameters": {},
           "integration_request_body_template": {},
           "responses": [],
-          "integration_responses": [
-            {
-              "status_code": "201",
-              "selection_pattern": ".*",
-              "response_parameters": {
-                "method.response.header.Content-Type": "'application/json'"
-              },
-              "response_templates": {
-                "application/json": "$input.body" 
-              }
-            }
-          ],
+          "integration_responses": [],
           "default_error_pattern": true
         }
       }
