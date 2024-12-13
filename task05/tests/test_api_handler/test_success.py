@@ -20,14 +20,14 @@ class TestSuccess(ApiHandlerLambdaTestCase):
         response = self.HANDLER.handle_request(event, context)
 
         self.assertEqual(response["statusCode"], 201)
-        self.assertIn("event", response)
-        self.assertIn("id", response["event"])
-        self.assertIn("principalId", response["event"])
-        self.assertIn("createdAt", response["event"])
-        self.assertIn("body", response["event"])
+        self.assertIn("event", response['body'])
+        self.assertIn("id", response['body']["event"])
+        self.assertIn("principalId", response['body']["event"])
+        self.assertIn("createdAt", response['body']["event"])
+        self.assertIn("body", response['body']["event"])
 
-        self.assertEqual(response["event"]["principalId"], 1)
-        self.assertEqual(response["event"]["body"], {"name": "John", "surname": "Doe"})
+        self.assertEqual(response['body']["event"]["principalId"], 1)
+        self.assertEqual(response['body']["event"]["body"], {"name": "John", "surname": "Doe"})
 
         put_item_args = mock_table.put_item.call_args[1]["Item"]
         self.assertIn("id", put_item_args)
