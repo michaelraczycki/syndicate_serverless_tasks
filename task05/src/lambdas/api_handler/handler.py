@@ -41,18 +41,9 @@ class ApiHandler(AbstractLambda):
         table = dynamodb.Table(table_name)
         table.put_item(Item=obj)
 
-        # Return the desired response
-        response = {
+        return {
             "statusCode": 201,
             "event": obj
-        }
-
-        return {
-            "statusCode": response["statusCode"],
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": json.dumps(response, indent=4)
         }
     
 
