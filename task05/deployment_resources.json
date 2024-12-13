@@ -28,7 +28,12 @@
   "task5_api": {
     "resource_type": "api_gateway",
     "deploy_stage": "api",
-    "dependencies": [],
+    "dependencies": [
+      {
+        "resource_name": "api_handler",
+        "resource_type": "lambda"
+      }
+    ],
     "resources": {
       "/events": {
         "enable_cors": false,
@@ -39,7 +44,17 @@
           "api_key_required": false,
           "method_request_parameters": {},
           "integration_request_body_template": {},
-          "responses": [],
+          "responses": [
+            {
+              "status_code": "201",
+              "response_parameters": {
+                "method.response.header.Content-Type": "'application/json'"
+              },
+              "response_models": {
+                "application/json": "Empty"
+              }
+            }
+          ],
           "integration_responses": [],
           "default_error_pattern": true
         }
@@ -51,7 +66,7 @@
   "Events": {
     "resource_type": "dynamodb_table",
     "hash_key_name": "id",
-    "hash_key_type": "N",
+    "hash_key_type": "S",
     "sort_key_name": "createdAt",
     "sort_key_type": "S",
     "read_capacity": 1,
