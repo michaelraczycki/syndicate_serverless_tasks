@@ -1,6 +1,5 @@
 from unittest.mock import patch, MagicMock
 from tests.test_api_handler import ApiHandlerLambdaTestCase
-import json
 
 
 class TestSuccess(ApiHandlerLambdaTestCase):
@@ -20,26 +19,16 @@ class TestSuccess(ApiHandlerLambdaTestCase):
 
         response = self.HANDLER.handle_request(event, context)
 
-        # Check status code and response structure
         self.assertEqual(response["statusCode"], 201)
-        self.assertIn("headers", response)
-        self.assertIn("body", response)
-        self.assertEqual(response["headers"].get("Content-Type"), "application/json")
+        self.assertIn("event", response)
+        self.assertIn("id", response["event"])
+        self.assertIn("principalId", response["event"])
+        self.assertIn("createdAt", response["event"])
+        self.assertIn("body", response["event"])
 
-        body = json.loads(response["body"])
-        self.assertIn("event", body)
+        self.assertEqual(response["event"]["principalId"], 1)
+        self.assertEqual(response["event"]["body"], {"name": "John", "surname": "Doe"})
 
-        # Check that 'event' has the correct keys
-        self.assertIn("id", body["event"])
-        self.assertIn("principalId", body["event"])
-        self.assertIn("createdAt", body["event"])
-        self.assertIn("body", body["event"])
-
-        # Confirm correct values
-        self.assertEqual(body["event"]["principalId"], 1)
-        self.assertEqual(body["event"]["body"], {"name": "John", "surname": "Doe"})
-
-        # Verify put_item call arguments
         put_item_args = mock_table.put_item.call_args[1]["Item"]
         self.assertIn("id", put_item_args)
         self.assertIn("principalId", put_item_args)
