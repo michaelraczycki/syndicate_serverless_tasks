@@ -1,5 +1,6 @@
-import unittest
 import importlib
+import unittest
+
 from tests import ImportFromSourceContext
 
 with ImportFromSourceContext():

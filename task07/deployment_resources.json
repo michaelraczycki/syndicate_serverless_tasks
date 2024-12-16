@@ -14,6 +14,7 @@
             "dynamodb:DeleteItem",
             "ssm:PutParameter",
             "ssm:GetParameter",
+            "s3:PutObject",
             "kms:Decrypt"
           ],
           "Effect": "Allow",
