@@ -34,7 +34,7 @@ class UuidGenerator(AbstractLambda):
         
         # Generate the filename with the current ISO timestamp
         timestamp = datetime.now().isoformat(timespec='milliseconds') + "Z"
-        file_name = f"{timestamp}.json"
+        file_name = f"{timestamp}"
         
         _LOG.info(f"Uploading file '{file_name}' to S3 bucket '{S3_BUCKET}'...")
         
