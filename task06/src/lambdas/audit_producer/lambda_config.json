@@ -11,10 +11,10 @@
   "dependencies": [],
   "event_sources": [
     {
-      "event_source_type": "dynamodb_stream",
-      "source": "Configuration",
+      "resource_type": "dynamodb_trigger",
+      "target_table": "Configuration",
       "batch_size": 10,
-      "starting_position": "LATEST"
+      "function_response_types": ["ReportBatchItemFailures"]
     }
   ],
   "env_variables": {
