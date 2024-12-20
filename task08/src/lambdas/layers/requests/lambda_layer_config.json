@@ -1,8 +1,8 @@
 {
-  "name": "meteo_layer",
+  "name": "requests",
   "resource_type": "lambda_layer",
   "runtimes": [
     "python3.10"
   ],
-  "deployment_package": "meteo_layer.zip"
+  "deployment_package": "requests_layer.zip"
 }
