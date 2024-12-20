@@ -2,7 +2,7 @@
 
 from commons.log_helper import get_logger
 from commons.abstract_lambda import AbstractLambda
-from src.lambdas.layers.meteo_layer.weather_sdk import WeatherSDK
+from src.lambdas.layers.requests.request import WeatherSDK
 
 
 _LOG = get_logger('ApiHandler-handler')
