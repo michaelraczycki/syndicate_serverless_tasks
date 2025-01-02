@@ -1,0 +1,6 @@
+name: task09
+build_projects_mapping:
+  python: src
+lambdas:
+  processor:
+    runtime: python
