@@ -10,7 +10,9 @@
   "lambda_path": "lambdas/processor",
   "dependencies": [],
   "event_sources": [],
-  "env_variables": {},
+  "env_variables": {
+    "target_table": "Weather"
+  },
   "publish_version": true,
   "alias": "${lambdas_alias_name}",
   "url_config": {
