@@ -6,20 +6,23 @@ import uuid
 import boto3
 from datetime import datetime
 import random
+from boto3.dynamodb.conditions import Attr  # For overlap checking
 
 _LOG = get_logger('ApiHandler-handler')
 
+# --- Cognito client ---
 cognito_client = boto3.client(
     'cognito-idp',
     region_name=os.environ.get('region', 'eu-central-1')
 )
 
-# Environment variables set in Lambda configuration
+# --- Environment variables ---
 CUP_ID = os.environ.get('cup_id')
 CLIENT_ID = os.environ.get('cup_client_id')
 tables_name = os.environ.get("tables_table")
 reservations_name = os.environ.get("reservations_table")
-# DynamoDB setup
+
+# --- DynamoDB setup ---
 dynamodb = boto3.resource(
     'dynamodb',
     region_name=os.environ.get('region', 'eu-central-1')
@@ -29,9 +32,12 @@ reservations_table = dynamodb.Table(reservations_name)
 
 
 class ApiHandler(AbstractLambda):
+    """
+    Main API Handler class for managing sign-up, sign-in, tables, and reservations.
+    """
 
     def validate_request(self, event) -> dict:
-        # You can implement additional request validation here if needed
+        # Optional: Additional request validation logic can go here
         pass
 
     def handle_request(self, event, context):
@@ -42,6 +48,8 @@ class ApiHandler(AbstractLambda):
         method = event.get('httpMethod')
         path = event.get('resource')
         body = {}
+
+        # Parse JSON body if present
         if event.get('body'):
             try:
                 body = json.loads(event['body'])
@@ -55,36 +63,34 @@ class ApiHandler(AbstractLambda):
 
         _LOG.info("Received request. Path: %s, Method: %s", path, method)
 
-        # Signup
+        # -----------------------
+        #    PUBLIC ENDPOINTS
+        # -----------------------
         if path == '/signup' and method == 'POST':
             return self.signup(body)
 
-        # Signin
         if path == '/signin' and method == 'POST':
             return self.signin(body)
 
-        # Tables: GET all
+        # -----------------------
+        # PROTECTED ENDPOINTS (with Cognito)
         if path == '/tables' and method == 'GET':
             return self.get_tables()
 
-        # Tables: POST (create)
         if path == '/tables' and method == 'POST':
             return self.create_table(body)
 
-        # Tables: GET one (assuming /tables/{tableId} is configured in the API)
         if path == '/tables/{tableId}' and method == 'GET':
             table_id = event.get('pathParameters', {}).get('tableId')
             return self.get_table_by_id(table_id)
 
-        # Reservations: GET all
         if path == '/reservations' and method == 'GET':
             return self.get_reservations()
 
-        # Reservations: POST (create)
         if path == '/reservations' and method == 'POST':
             return self.create_reservation(body)
 
-        # Fallback if no matching route
+        # If no route is matched:
         _LOG.warning("No matching route found for path: %s, method: %s", path, method)
         return {
             "statusCode": 400,
@@ -93,7 +99,10 @@ class ApiHandler(AbstractLambda):
         }
 
     def signup(self, body: dict):
-        """ Sign up a new user in Cognito and auto-confirm them. """
+        """
+        Sign up a new user in Cognito and auto-confirm them.
+        Body must have: { "email": ..., "password": ... }
+        """
         email = body.get('email')
         password = body.get('password')
         _LOG.info("Preparing signup. Email: %s", email)
@@ -138,7 +147,10 @@ class ApiHandler(AbstractLambda):
         }
 
     def signin(self, body: dict):
-        """ Sign in a user and return their ID token as 'accessToken'. """
+        """
+        Sign in a user and return their ID token as 'accessToken'.
+        Body must have: { "email": ..., "password": ... }
+        """
         email = body.get('email')
         password = body.get('password')
         _LOG.info("Preparing signin. Email: %s", email)
@@ -193,17 +205,18 @@ class ApiHandler(AbstractLambda):
     def get_tables(self):
         """
         Return a list of all tables.
+        Response shape:
         {
-            "tables": [
-                {
-                    "id": ...,
-                    "number": ...,
-                    "places": ...,
-                    "isVip": ...,
-                    "minOrder": ...
-                },
-                ...
-            ]
+          "tables": [
+            {
+              "id": ...,
+              "number": ...,
+              "places": ...,
+              "isVip": ...,
+              "minOrder": ...
+            },
+            ...
+          ]
         }
         """
         _LOG.info("Fetching all tables from DynamoDB.")
@@ -227,13 +240,13 @@ class ApiHandler(AbstractLambda):
 
     def create_table(self, body: dict):
         """
-        Create a new table item in DynamoDB. The request body should have:
+        Create a new table item in DynamoDB. Request body:
         {
-            "id": int,
-            "number": int,
-            "places": int,
-            "isVip": bool,
-            "minOrder": optional int
+          "id": int,
+          "number": int,
+          "places": int,
+          "isVip": bool,
+          "minOrder": optional int
         }
         """
         _LOG.info("Request to create a new table. Body: %s", body)
@@ -279,7 +292,17 @@ class ApiHandler(AbstractLambda):
             }
 
     def get_table_by_id(self, table_id):
-        """ Fetch a single table item by its ID. """
+        """
+        Fetch a single table item by its ID (the "id" attribute).
+        Response is the item itself:
+        {
+          "id": ...,
+          "number": ...,
+          "places": ...,
+          "isVip": ...,
+          "minOrder": ...
+        }
+        """
         _LOG.info("Fetching table by id: %s", table_id)
         if not table_id:
             _LOG.error("Missing tableId in path parameters.")
@@ -319,17 +342,17 @@ class ApiHandler(AbstractLambda):
         """
         Return a list of all reservations.
         {
-            "reservations": [
-                {
-                    "tableNumber": int,
-                    "clientName": string,
-                    "phoneNumber": string,
-                    "date": string (yyyy-MM-dd),
-                    "slotTimeStart": string (HH:MM),
-                    "slotTimeEnd": string (HH:MM)
-                },
-                ...
-            ]
+          "reservations": [
+            {
+              "tableNumber": int,
+              "clientName": string,
+              "phoneNumber": string,
+              "date": string (yyyy-MM-dd),
+              "slotTimeStart": string (HH:MM),
+              "slotTimeEnd": string (HH:MM)
+            },
+            ...
+          ]
         }
         """
         _LOG.info("Fetching all reservations from DynamoDB.")
@@ -355,12 +378,12 @@ class ApiHandler(AbstractLambda):
         """
         Create a new reservation item in DynamoDB.
         {
-            "tableNumber": int,
-            "clientName": string,
-            "phoneNumber": string,
-            "date": string (yyyy-MM-dd),
-            "slotTimeStart": string (HH:MM),
-            "slotTimeEnd": string (HH:MM)
+          "tableNumber": int,
+          "clientName": string,
+          "phoneNumber": string,
+          "date": string (yyyy-MM-dd),
+          "slotTimeStart": string (HH:MM),
+          "slotTimeEnd": string (HH:MM)
         }
         Returns: { "reservationId": <uuidv4> }
         """
@@ -388,8 +411,60 @@ class ApiHandler(AbstractLambda):
                 "body": json.dumps({'message': 'Missing required reservation fields.'})
             }
 
-        # Generate a numeric "id" to match table schema "hash_key_type": "N"
-        # but also return a separate string reservationId (UUID) to the client
+        # 1) Ensure the table actually exists:
+        try:
+            check_resp = tables_table.get_item(Key={'id': int(table_number)})
+            if 'Item' not in check_resp or not check_resp['Item']:
+                _LOG.error("Reservation failed. Table %s does not exist.", table_number)
+                return {
+                    "statusCode": 400,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({'message': f"Table {table_number} does not exist."})
+                }
+        except Exception as e:
+            _LOG.error("Error checking table existence: %s", str(e))
+            _LOG.exception(e)
+            return {
+                "statusCode": 400,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({'message': "Error verifying table existence."})
+            }
+
+        # 2) Check for overlapping reservations for this table, date, and times
+        try:
+            existing_reservations = reservations_table.scan(
+                FilterExpression=(
+                    Attr("tableNumber").eq(int(table_number)) & 
+                    Attr("date").eq(date_val)
+                )
+            ).get('Items', [])
+
+            # Compare times to see if they overlap.
+            # Overlap occurs if: (start1 < end2) AND (start2 < end1)
+            # Convert times to something comparable as strings: "HH:MM"
+            for r in existing_reservations:
+                if (slot_start < r["slotTimeEnd"]) and (r["slotTimeStart"] < slot_end):
+                    _LOG.error(
+                        "Reservation time overlap. Existing: %s - %s, Requested: %s - %s",
+                        r["slotTimeStart"], r["slotTimeEnd"], slot_start, slot_end
+                    )
+                    return {
+                        "statusCode": 400,
+                        "headers": {"Content-Type": "application/json"},
+                        "body": json.dumps({
+                            'message': f"Time overlap for table {table_number} on {date_val}."
+                        })
+                    }
+        except Exception as e:
+            _LOG.error("Error checking for overlapping reservations: %s", str(e))
+            _LOG.exception(e)
+            return {
+                "statusCode": 400,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({'message': "Error checking reservation overlap."})
+            }
+
+        # 3) Generate the record to insert
         reservation_id_str = str(uuid.uuid4())
         numeric_id = random.randint(1, 999999999)
 

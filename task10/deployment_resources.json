@@ -16,6 +16,7 @@
             "ssm:PutParameter",
             "ssm:GetParameter",
             "kms:Decrypt",
+            "cognito-idp:SignUp",
             "cognito-idp:AdminCreateUser",
             "cognito-idp:AdminInitiateAuth",
             "cognito-idp:GetIdentityProviderByIdentifier",
@@ -82,7 +83,8 @@
         "POST": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "NONE",
+          "authorization_type": "COGNITO_USER_POOLS",
+          "authorizer": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -92,7 +94,22 @@
         "GET": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "NONE",
+          "authorization_type": "COGNITO_USER_POOLS",
+          "authorizer": "authorizer",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        }
+      },
+      "/tables/{tableId}": {
+        "enable_cors": true,
+        "GET": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "COGNITO_USER_POOLS",
+          "authorizer": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -105,7 +122,8 @@
         "GET": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "NONE",
+          "authorization_type": "COGNITO_USER_POOLS",
+          "authorizer": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -115,7 +133,8 @@
         "POST": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "NONE",
+          "authorization_type": "COGNITO_USER_POOLS",
+          "authorizer": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
