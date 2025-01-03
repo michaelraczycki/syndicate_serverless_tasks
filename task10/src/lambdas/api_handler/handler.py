@@ -17,14 +17,15 @@ cognito_client = boto3.client(
 # Environment variables set in Lambda configuration
 CUP_ID = os.environ.get('cup_id')
 CLIENT_ID = os.environ.get('cup_client_id')
-
+tables_name = os.environ.get("tables_table")
+reservations_name = os.environ.get("reservations_table")
 # DynamoDB setup
 dynamodb = boto3.resource(
     'dynamodb',
     region_name=os.environ.get('region', 'eu-central-1')
 )
-tables_table = dynamodb.Table('Tables')
-reservations_table = dynamodb.Table('Reservations')
+tables_table = dynamodb.Table(f'{tables_name}')
+reservations_table = dynamodb.Table(f'{reservations_name}')
 
 
 class ApiHandler(AbstractLambda):
