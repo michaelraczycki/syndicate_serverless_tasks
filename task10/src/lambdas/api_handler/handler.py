@@ -24,8 +24,8 @@ dynamodb = boto3.resource(
     'dynamodb',
     region_name=os.environ.get('region', 'eu-central-1')
 )
-tables_table = dynamodb.Table(f'{tables_name}')
-reservations_table = dynamodb.Table(f'{reservations_name}')
+tables_table = dynamodb.Table(tables_name)
+reservations_table = dynamodb.Table(reservations_name)
 
 
 class ApiHandler(AbstractLambda):
