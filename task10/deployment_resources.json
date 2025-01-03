@@ -25,7 +25,7 @@
     "resource_type": "iam_policy",
     "tags": {}
   },
-  "task10-api": {
+  "task10_api": {
     "resource_type": "api_gateway",
     "authorizers": {
       "authorizer": {
