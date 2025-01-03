@@ -37,11 +37,22 @@ class ApiHandler(AbstractLambda):
         """
         Main dispatch for the API endpoints.
         """
+        _LOG.info("Lambda event: %s", json.dumps(event))
         method = event.get('httpMethod')
         path = event.get('resource')
         body = {}
         if event.get('body'):
-            body = json.loads(event['body'])
+            try:
+                body = json.loads(event['body'])
+            except Exception as e:
+                _LOG.error("Error parsing request body: %s", str(e))
+                return {
+                    "statusCode": 400,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({"message": "Invalid JSON input."})
+                }
+
+        _LOG.info("Received request. Path: %s, Method: %s", path, method)
 
         # Signup
         if path == '/signup' and method == 'POST':
@@ -59,7 +70,7 @@ class ApiHandler(AbstractLambda):
         if path == '/tables' and method == 'POST':
             return self.create_table(body)
 
-        # Tables: GET one (assuming /tables/{tableId} is configured)
+        # Tables: GET one (assuming /tables/{tableId} is configured in the API)
         if path == '/tables/{tableId}' and method == 'GET':
             table_id = event.get('pathParameters', {}).get('tableId')
             return self.get_table_by_id(table_id)
@@ -73,6 +84,7 @@ class ApiHandler(AbstractLambda):
             return self.create_reservation(body)
 
         # Fallback if no matching route
+        _LOG.warning("No matching route found for path: %s, method: %s", path, method)
         return {
             "statusCode": 400,
             "headers": {"Content-Type": "application/json"},
@@ -83,8 +95,10 @@ class ApiHandler(AbstractLambda):
         """ Sign up a new user in Cognito and auto-confirm them. """
         email = body.get('email')
         password = body.get('password')
+        _LOG.info("Preparing signup. Email: %s", email)
 
         if not email or not password:
+            _LOG.error("Signup failed. Missing email or password.")
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -92,24 +106,30 @@ class ApiHandler(AbstractLambda):
             }
 
         try:
+            _LOG.info("Attempting sign_up with Cognito. Email: %s", email)
             cognito_client.sign_up(
                 ClientId=CLIENT_ID,
                 Username=email,
                 Password=password,
                 UserAttributes=[{'Name': 'email', 'Value': email}]
             )
+            _LOG.info("Sign_up call succeeded. Now confirming sign_up in admin mode.")
             cognito_client.admin_confirm_sign_up(
                 UserPoolId=CUP_ID,
                 Username=email
             )
         except Exception as e:
-            _LOG.error(f"Sign up error: {str(e)}")
+            _LOG.error(f"Sign up error for email '{email}': {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({'message': f'Cannot create user {email}.'})
+                "body": json.dumps({
+                    'message': f'Cannot create user {email}. Error: {str(e)}'
+                })
             }
 
+        _LOG.info("User %s was created and confirmed successfully.", email)
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json"},
@@ -120,8 +140,10 @@ class ApiHandler(AbstractLambda):
         """ Sign in a user and return their ID token as 'accessToken'. """
         email = body.get('email')
         password = body.get('password')
+        _LOG.info("Preparing signin. Email: %s", email)
 
         if not email or not password:
+            _LOG.error("Signin failed. Missing email or password.")
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -129,6 +151,7 @@ class ApiHandler(AbstractLambda):
             }
 
         try:
+            _LOG.info("Attempting admin_initiate_auth for email: %s", email)
             auth_result = cognito_client.admin_initiate_auth(
                 UserPoolId=CUP_ID,
                 ClientId=CLIENT_ID,
@@ -139,22 +162,27 @@ class ApiHandler(AbstractLambda):
                 }
             )
 
+            _LOG.info("admin_initiate_auth response: %s", auth_result)
+
             if auth_result and 'AuthenticationResult' in auth_result:
                 id_token = auth_result['AuthenticationResult'].get('IdToken')
                 # Return the ID token under the key "accessToken" per requirements
+                _LOG.info("Signin success for user: %s", email)
                 return {
                     "statusCode": 200,
                     "headers": {"Content-Type": "application/json"},
                     "body": json.dumps({"accessToken": id_token})
                 }
             else:
+                _LOG.error("Signin failed. AuthenticationResult missing or invalid.")
                 return {
                     "statusCode": 400,
                     "headers": {"Content-Type": "application/json"},
                     "body": json.dumps({'message': 'Unable to authenticate user.'})
                 }
         except Exception as e:
-            _LOG.error(f"Sign in error: {str(e)}")
+            _LOG.error(f"Sign in error for email '{email}': {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -177,9 +205,11 @@ class ApiHandler(AbstractLambda):
             ]
         }
         """
+        _LOG.info("Fetching all tables from DynamoDB.")
         try:
             response = tables_table.scan()
             items = response.get('Items', [])
+            _LOG.info("Tables scan response: %s", items)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
@@ -187,6 +217,7 @@ class ApiHandler(AbstractLambda):
             }
         except Exception as e:
             _LOG.error(f"Error fetching tables: {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -204,6 +235,7 @@ class ApiHandler(AbstractLambda):
             "minOrder": optional int
         }
         """
+        _LOG.info("Request to create a new table. Body: %s", body)
         table_id = body.get('id')
         table_number = body.get('number')
         places = body.get('places')
@@ -211,6 +243,7 @@ class ApiHandler(AbstractLambda):
         min_order = body.get('minOrder', None)
 
         if table_id is None or table_number is None or places is None or is_vip is None:
+            _LOG.error("Missing required fields for table creation.")
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -228,6 +261,7 @@ class ApiHandler(AbstractLambda):
                 item['minOrder'] = int(min_order)
 
             tables_table.put_item(Item=item)
+            _LOG.info("Table created successfully with id: %d", table_id)
 
             return {
                 "statusCode": 200,
@@ -236,6 +270,7 @@ class ApiHandler(AbstractLambda):
             }
         except Exception as e:
             _LOG.error(f"Error creating table: {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -244,7 +279,9 @@ class ApiHandler(AbstractLambda):
 
     def get_table_by_id(self, table_id):
         """ Fetch a single table item by its ID. """
+        _LOG.info("Fetching table by id: %s", table_id)
         if not table_id:
+            _LOG.error("Missing tableId in path parameters.")
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -255,19 +292,22 @@ class ApiHandler(AbstractLambda):
             response = tables_table.get_item(Key={'id': int(table_id)})
             item = response.get('Item')
             if not item:
+                _LOG.error("Table not found with id: %s", table_id)
                 return {
                     "statusCode": 400,
                     "headers": {"Content-Type": "application/json"},
                     "body": json.dumps({'message': f'Table with id {table_id} not found.'})
                 }
 
+            _LOG.info("Retrieved table data: %s", item)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps(item)
             }
         except Exception as e:
-            _LOG.error(f"Error fetching table by ID: {str(e)}")
+            _LOG.error(f"Error fetching table by ID {table_id}: {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -291,9 +331,11 @@ class ApiHandler(AbstractLambda):
             ]
         }
         """
+        _LOG.info("Fetching all reservations from DynamoDB.")
         try:
             response = reservations_table.scan()
             items = response.get('Items', [])
+            _LOG.info("Reservations scan response: %s", items)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
@@ -301,6 +343,7 @@ class ApiHandler(AbstractLambda):
             }
         except Exception as e:
             _LOG.error(f"Error fetching reservations: {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -320,6 +363,7 @@ class ApiHandler(AbstractLambda):
         }
         Returns: { "reservationId": <uuidv4> }
         """
+        _LOG.info("Request to create a new reservation. Body: %s", body)
         table_number = body.get('tableNumber')
         client_name = body.get('clientName')
         phone_number = body.get('phoneNumber')
@@ -336,6 +380,7 @@ class ApiHandler(AbstractLambda):
             not slot_start or
             not slot_end
         ):
+            _LOG.error("Missing required reservation fields.")
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -360,6 +405,7 @@ class ApiHandler(AbstractLambda):
             }
 
             reservations_table.put_item(Item=item)
+            _LOG.info("Reservation created. ID: %d, UUID: %s", numeric_id, reservation_id_str)
 
             return {
                 "statusCode": 200,
@@ -368,6 +414,7 @@ class ApiHandler(AbstractLambda):
             }
         except Exception as e:
             _LOG.error(f"Error creating reservation: {str(e)}")
+            _LOG.exception(e)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -382,4 +429,5 @@ def lambda_handler(event, context):
     """
     AWS Lambda entry point.
     """
+    _LOG.info("Entered lambda_handler with event: %s", json.dumps(event))
     return HANDLER.handle_request(event, context)
