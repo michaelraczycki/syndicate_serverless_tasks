@@ -83,8 +83,7 @@
         "POST": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "COGNITO_USER_POOLS",
-          "authorizer": "authorizer",
+          "authorization_type": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -94,8 +93,7 @@
         "GET": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "COGNITO_USER_POOLS",
-          "authorizer": "authorizer",
+          "authorization_type": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -108,8 +106,7 @@
         "GET": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "COGNITO_USER_POOLS",
-          "authorizer": "authorizer",
+          "authorization_type": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -122,8 +119,7 @@
         "GET": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "COGNITO_USER_POOLS",
-          "authorizer": "authorizer",
+          "authorization_type": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
@@ -133,8 +129,7 @@
         "POST": {
           "enable_proxy": true,
           "integration_request_body_template": {},
-          "authorization_type": "COGNITO_USER_POOLS",
-          "authorizer": "authorizer",
+          "authorization_type": "authorizer",
           "integration_type": "lambda",
           "method_request_parameters": {},
           "default_error_pattern": true,
