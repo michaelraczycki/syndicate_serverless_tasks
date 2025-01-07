@@ -507,7 +507,6 @@ class ApiHandler(AbstractLambda):
                 "body": json.dumps({'message': 'Unable to create reservation.'})
             }
 
-
 HANDLER = ApiHandler()
 
 
