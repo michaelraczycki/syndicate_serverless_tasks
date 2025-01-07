@@ -1,12 +1,14 @@
-from commons.log_helper import get_logger
-from commons.abstract_lambda import AbstractLambda
 import json
 import os
-import uuid
-import boto3
-from datetime import datetime
 import random
+import uuid
+from decimal import Decimal
+
+import boto3
 from boto3.dynamodb.conditions import Attr  # For overlap checking
+
+from commons.abstract_lambda import AbstractLambda
+from commons.log_helper import get_logger
 
 _LOG = get_logger('ApiHandler-handler')
 
@@ -30,6 +32,15 @@ dynamodb = boto3.resource(
 tables_table = dynamodb.Table(tables_name)
 reservations_table = dynamodb.Table(reservations_name)
 
+# -------------------
+# Decimal -> JSON fix
+# -------------------
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            # Convert to int if it’s a whole number, else float
+            return int(obj) if obj % 1 == 0 else float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 class ApiHandler(AbstractLambda):
     """
@@ -74,6 +85,7 @@ class ApiHandler(AbstractLambda):
 
         # -----------------------
         # PROTECTED ENDPOINTS (with Cognito)
+        # -----------------------
         if path == '/tables' and method == 'GET':
             return self.get_tables()
 
@@ -205,7 +217,6 @@ class ApiHandler(AbstractLambda):
     def get_tables(self):
         """
         Return a list of all tables.
-        Response shape:
         {
           "tables": [
             {
@@ -227,7 +238,7 @@ class ApiHandler(AbstractLambda):
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"tables": items})
+                "body": json.dumps({"tables": items}, cls=DecimalEncoder)
             }
         except Exception as e:
             _LOG.error(f"Error fetching tables: {str(e)}")
@@ -327,7 +338,7 @@ class ApiHandler(AbstractLambda):
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps(item)
+                "body": json.dumps(item, cls=DecimalEncoder)
             }
         except Exception as e:
             _LOG.error(f"Error fetching table by ID {table_id}: {str(e)}")
@@ -363,7 +374,7 @@ class ApiHandler(AbstractLambda):
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"reservations": items})
+                "body": json.dumps({"reservations": items}, cls=DecimalEncoder)
             }
         except Exception as e:
             _LOG.error(f"Error fetching reservations: {str(e)}")
@@ -434,14 +445,13 @@ class ApiHandler(AbstractLambda):
         try:
             existing_reservations = reservations_table.scan(
                 FilterExpression=(
-                    Attr("tableNumber").eq(int(table_number)) & 
+                    Attr("tableNumber").eq(int(table_number)) &
                     Attr("date").eq(date_val)
                 )
             ).get('Items', [])
 
             # Compare times to see if they overlap.
             # Overlap occurs if: (start1 < end2) AND (start2 < end1)
-            # Convert times to something comparable as strings: "HH:MM"
             for r in existing_reservations:
                 if (slot_start < r["slotTimeEnd"]) and (r["slotTimeStart"] < slot_end):
                     _LOG.error(
