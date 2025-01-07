@@ -32,7 +32,7 @@
     "resource_type": "iam_policy",
     "tags": {}
   },
-  "task10_api": {
+  "task11_api": {
     "resource_type": "api_gateway",
     "authorizers": {
       "authorizer": {

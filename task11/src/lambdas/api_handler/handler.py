@@ -12,6 +12,14 @@ from commons.log_helper import get_logger
 
 _LOG = get_logger('ApiHandler-handler')
 
+# CORS headers
+CORS_HEADERS = {
+    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': '*',
+    'Accept-Version': '*'
+}
+
 # --- Cognito client ---
 cognito_client = boto3.client(
     'cognito-idp',
@@ -68,7 +76,7 @@ class ApiHandler(AbstractLambda):
                 _LOG.error("Error parsing request body: %s", str(e))
                 return {
                     "statusCode": 400,
-                    "headers": {"Content-Type": "application/json"},
+                    "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                     "body": json.dumps({"message": "Invalid JSON input."})
                 }
 
@@ -106,7 +114,7 @@ class ApiHandler(AbstractLambda):
         _LOG.warning("No matching route found for path: %s, method: %s", path, method)
         return {
             "statusCode": 400,
-            "headers": {"Content-Type": "application/json"},
+            "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
             "body": json.dumps({"message": f"Unsupported path {path} or method {method}"})
         }
 
@@ -123,7 +131,7 @@ class ApiHandler(AbstractLambda):
             _LOG.error("Signup failed. Missing email or password.")
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing email or password in signup.'})
             }
 
@@ -145,7 +153,7 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({
                     'message': f'Cannot create user {email}. Error: {str(e)}'
                 })
@@ -154,7 +162,7 @@ class ApiHandler(AbstractLambda):
         _LOG.info("User %s was created and confirmed successfully.", email)
         return {
             "statusCode": 200,
-            "headers": {"Content-Type": "application/json"},
+            "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
             "body": json.dumps({'message': f'User {email} was created.'})
         }
 
@@ -171,7 +179,7 @@ class ApiHandler(AbstractLambda):
             _LOG.error("Signin failed. Missing email or password.")
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing email or password in signin.'})
             }
 
@@ -195,14 +203,14 @@ class ApiHandler(AbstractLambda):
                 _LOG.info("Signin success for user: %s", email)
                 return {
                     "statusCode": 200,
-                    "headers": {"Content-Type": "application/json"},
+                    "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                     "body": json.dumps({"accessToken": id_token})
                 }
             else:
                 _LOG.error("Signin failed. AuthenticationResult missing or invalid.")
                 return {
                     "statusCode": 400,
-                    "headers": {"Content-Type": "application/json"},
+                    "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                     "body": json.dumps({'message': 'Unable to authenticate user.'})
                 }
         except Exception as e:
@@ -210,25 +218,13 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Invalid login.'})
             }
 
     def get_tables(self):
         """
         Return a list of all tables.
-        {
-          "tables": [
-            {
-              "id": ...,
-              "number": ...,
-              "places": ...,
-              "isVip": ...,
-              "minOrder": ...
-            },
-            ...
-          ]
-        }
         """
         _LOG.info("Fetching all tables from DynamoDB.")
         try:
@@ -237,7 +233,7 @@ class ApiHandler(AbstractLambda):
             _LOG.info("Tables scan response: %s", items)
             return {
                 "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({"tables": items}, cls=DecimalEncoder)
             }
         except Exception as e:
@@ -245,20 +241,13 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Unable to retrieve tables.'})
             }
 
     def create_table(self, body: dict):
         """
-        Create a new table item in DynamoDB. Request body:
-        {
-          "id": int,
-          "number": int,
-          "places": int,
-          "isVip": bool,
-          "minOrder": optional int
-        }
+        Create a new table item in DynamoDB.
         """
         _LOG.info("Request to create a new table. Body: %s", body)
         table_id = body.get('id')
@@ -271,7 +260,7 @@ class ApiHandler(AbstractLambda):
             _LOG.error("Missing required fields for table creation.")
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing required fields for table creation.'})
             }
 
@@ -290,7 +279,7 @@ class ApiHandler(AbstractLambda):
 
             return {
                 "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({"id": table_id})
             }
         except Exception as e:
@@ -298,28 +287,20 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Unable to create the table.'})
             }
 
     def get_table_by_id(self, table_id):
         """
         Fetch a single table item by its ID (the "id" attribute).
-        Response is the item itself:
-        {
-          "id": ...,
-          "number": ...,
-          "places": ...,
-          "isVip": ...,
-          "minOrder": ...
-        }
         """
         _LOG.info("Fetching table by id: %s", table_id)
         if not table_id:
             _LOG.error("Missing tableId in path parameters.")
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing tableId in path parameters.'})
             }
 
@@ -330,14 +311,14 @@ class ApiHandler(AbstractLambda):
                 _LOG.error("Table not found with id: %s", table_id)
                 return {
                     "statusCode": 400,
-                    "headers": {"Content-Type": "application/json"},
+                    "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                     "body": json.dumps({'message': f'Table with id {table_id} not found.'})
                 }
 
             _LOG.info("Retrieved table data: %s", item)
             return {
                 "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps(item, cls=DecimalEncoder)
             }
         except Exception as e:
@@ -345,26 +326,13 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': f'Unable to retrieve table {table_id}.'})
             }
 
     def get_reservations(self):
         """
         Return a list of all reservations.
-        {
-          "reservations": [
-            {
-              "tableNumber": int,
-              "clientName": string,
-              "phoneNumber": string,
-              "date": string (yyyy-MM-dd),
-              "slotTimeStart": string (HH:MM),
-              "slotTimeEnd": string (HH:MM)
-            },
-            ...
-          ]
-        }
         """
         _LOG.info("Fetching all reservations from DynamoDB.")
         try:
@@ -373,7 +341,7 @@ class ApiHandler(AbstractLambda):
             _LOG.info("Reservations scan response: %s", items)
             return {
                 "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({"reservations": items}, cls=DecimalEncoder)
             }
         except Exception as e:
@@ -381,22 +349,13 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Unable to retrieve reservations.'})
             }
 
     def create_reservation(self, body: dict):
         """
         Create a new reservation item in DynamoDB.
-        {
-        "tableNumber": int,
-        "clientName": string,
-        "phoneNumber": string,
-        "date": string (yyyy-MM-dd),
-        "slotTimeStart": string (HH:MM),
-        "slotTimeEnd": string (HH:MM)
-        }
-        Returns: { "reservationId": <uuidv4> }
         """
         _LOG.info("Request to create a new reservation. Body: %s", body)
         table_number = body.get('tableNumber')
@@ -418,7 +377,7 @@ class ApiHandler(AbstractLambda):
             _LOG.error("Missing required reservation fields.")
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing required reservation fields.'})
             }
         try:
@@ -430,7 +389,7 @@ class ApiHandler(AbstractLambda):
                 _LOG.error("Reservation failed. Table number %s does not exist.", table_number)
                 return {
                     "statusCode": 400,
-                    "headers": {"Content-Type": "application/json"},
+                    "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                     "body": json.dumps({'message': f"Table number {table_number} does not exist."})
                 }
 
@@ -439,7 +398,7 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': "Error verifying table existence."})
             }
 
@@ -461,17 +420,20 @@ class ApiHandler(AbstractLambda):
                     )
                     return {
                         "statusCode": 400,
-                        "headers": {"Content-Type": "application/json"},
-                        "body": json.dumps({
-                            'message': f"Time overlap for table {table_number} on {date_val}."
-                        })
+                        "headers": {
+                            "statusCode": 400,
+                            "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
+                            "body": json.dumps({
+                                'message': f"Time overlap for table {table_number} on {date_val}."
+                            })
+                        }
                     }
         except Exception as e:
             _LOG.error("Error checking for overlapping reservations: %s", str(e))
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': "Error checking reservation overlap."})
             }
 
@@ -496,7 +458,7 @@ class ApiHandler(AbstractLambda):
 
             return {
                 "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({"reservationId": reservation_id_str})
             }
         except Exception as e:
@@ -504,7 +466,7 @@ class ApiHandler(AbstractLambda):
             _LOG.exception(e)
             return {
                 "statusCode": 400,
-                "headers": {"Content-Type": "application/json"},
+                "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Unable to create reservation.'})
             }
 
