@@ -389,12 +389,12 @@ class ApiHandler(AbstractLambda):
         """
         Create a new reservation item in DynamoDB.
         {
-          "tableNumber": int,
-          "clientName": string,
-          "phoneNumber": string,
-          "date": string (yyyy-MM-dd),
-          "slotTimeStart": string (HH:MM),
-          "slotTimeEnd": string (HH:MM)
+        "tableNumber": int,
+        "clientName": string,
+        "phoneNumber": string,
+        "date": string (yyyy-MM-dd),
+        "slotTimeStart": string (HH:MM),
+        "slotTimeEnd": string (HH:MM)
         }
         Returns: { "reservationId": <uuidv4> }
         """
@@ -421,19 +421,21 @@ class ApiHandler(AbstractLambda):
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing required reservation fields.'})
             }
-
-        # 1) Ensure the table actually exists:
         try:
-            check_resp = tables_table.get_item(Key={'id': int(table_number)})
-            if 'Item' not in check_resp or not check_resp['Item']:
-                _LOG.error("Reservation failed. Table %s does not exist.", table_number)
+            check_resp = tables_table.scan(
+                FilterExpression=Attr("number").eq(int(table_number))
+            )
+            found_items = check_resp.get('Items', [])
+            if not found_items:
+                _LOG.error("Reservation failed. Table number %s does not exist.", table_number)
                 return {
                     "statusCode": 400,
                     "headers": {"Content-Type": "application/json"},
-                    "body": json.dumps({'message': f"Table {table_number} does not exist."})
+                    "body": json.dumps({'message': f"Table number {table_number} does not exist."})
                 }
+
         except Exception as e:
-            _LOG.error("Error checking table existence: %s", str(e))
+            _LOG.error("Error checking table existence by 'number': %s", str(e))
             _LOG.exception(e)
             return {
                 "statusCode": 400,
@@ -441,7 +443,7 @@ class ApiHandler(AbstractLambda):
                 "body": json.dumps({'message': "Error verifying table existence."})
             }
 
-        # 2) Check for overlapping reservations for this table, date, and times
+        # Check for overlapping reservations for this tableNumber, date, and times
         try:
             existing_reservations = reservations_table.scan(
                 FilterExpression=(
@@ -450,7 +452,6 @@ class ApiHandler(AbstractLambda):
                 )
             ).get('Items', [])
 
-            # Compare times to see if they overlap.
             # Overlap occurs if: (start1 < end2) AND (start2 < end1)
             for r in existing_reservations:
                 if (slot_start < r["slotTimeEnd"]) and (r["slotTimeStart"] < slot_end):
@@ -474,7 +475,7 @@ class ApiHandler(AbstractLambda):
                 "body": json.dumps({'message': "Error checking reservation overlap."})
             }
 
-        # 3) Generate the record to insert
+        # Generate the record to insert
         reservation_id_str = str(uuid.uuid4())
         numeric_id = random.randint(1, 999999999)
 
@@ -507,8 +508,8 @@ class ApiHandler(AbstractLambda):
                 "body": json.dumps({'message': 'Unable to create reservation.'})
             }
 
-HANDLER = ApiHandler()
 
+HANDLER = ApiHandler()
 
 def lambda_handler(event, context):
     """
