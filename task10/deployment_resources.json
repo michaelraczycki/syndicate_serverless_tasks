@@ -39,7 +39,7 @@
         "type": "COGNITO_USER_POOLS",
         "identity_source": "method.request.header.Authorization",
         "user_pools": [
-          "${userpool_name}"
+          "${booking_userpool}"
         ],
         "ttl": 300
       }
