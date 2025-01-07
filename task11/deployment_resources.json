@@ -12,9 +12,16 @@
             "dynamodb:PutItem",
             "dynamodb:Batch*",
             "dynamodb:DeleteItem",
+            "dynamodb:Scan",
             "ssm:PutParameter",
             "ssm:GetParameter",
-            "kms:Decrypt"
+            "kms:Decrypt",
+            "cognito-idp:SignUp",
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminInitiateAuth",
+            "cognito-idp:GetIdentityProviderByIdentifier",
+            "cognito-idp:AdminRespondToAuthChallenge",
+            "cognito-idp:AdminConfirmSignUp"
           ],
           "Effect": "Allow",
           "Resource": "*"
@@ -23,6 +30,155 @@
       "Version": "2012-10-17"
     },
     "resource_type": "iam_policy",
+    "tags": {}
+  },
+  "task10_api": {
+    "resource_type": "api_gateway",
+    "authorizers": {
+      "authorizer": {
+        "type": "COGNITO_USER_POOLS",
+        "identity_source": "method.request.header.Authorization",
+        "user_pools": [
+          "${booking_userpool}"
+        ],
+        "ttl": 300
+      }
+    },
+    "deploy_stage": "api",
+    "dependencies": [
+      {
+        "resource_name": "api_handler",
+        "resource_type": "lambda"
+      }
+    ],
+    "resources": {
+      "/signup": {
+        "enable_cors": true,
+        "POST": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "NONE",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        }
+      },
+      "/signin": {
+        "enable_cors": true,
+        "POST": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "NONE",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        }
+      },
+      "/tables": {
+        "enable_cors": true,
+        "POST": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "authorizer",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        },
+        "GET": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "authorizer",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        }
+      },
+      "/tables/{tableId}": {
+        "enable_cors": true,
+        "GET": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "authorizer",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        }
+      },
+      "/reservations": {
+        "enable_cors": true,
+        "GET": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "authorizer",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        },
+        "POST": {
+          "enable_proxy": true,
+          "integration_request_body_template": {},
+          "authorization_type": "authorizer",
+          "integration_type": "lambda",
+          "method_request_parameters": {},
+          "default_error_pattern": true,
+          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
+          "lambda_name": "api_handler"
+        }
+      }
+    },
+    "minimum_compression_size": 0,
+    "tags": {}
+  },
+  "${tables_table}": {
+    "resource_type": "dynamodb_table",
+    "hash_key_name": "id",
+    "hash_key_type": "N",
+    "read_capacity": 2,
+    "write_capacity": 2,
+    "global_indexes": [],
+    "autoscaling": [],
+    "tags": {}
+  },
+  "${reservations_table}": {
+    "resource_type": "dynamodb_table",
+    "hash_key_name": "id",
+    "hash_key_type": "N",
+    "read_capacity": 2,
+    "write_capacity": 2,
+    "global_indexes": [],
+    "autoscaling": [],
+    "tags": {}
+  },
+  "${booking_userpool}": {
+    "resource_type": "cognito_idp",
+    "password_policy": {
+      "require_uppercase": true,
+      "require_numbers": true
+    },
+    "auto_verified_attributes": [],
+    "sms_configuration": {},
+    "username_attributes": [],
+    "custom_attributes": [],
+    "client": {
+      "client_name": "client-app",
+      "generate_secret": false,
+      "explicit_auth_flows": [
+        "ALLOW_ADMIN_USER_PASSWORD_AUTH",
+        "ALLOW_REFRESH_TOKEN_AUTH"
+      ]
+    },
     "tags": {}
   }
 }
