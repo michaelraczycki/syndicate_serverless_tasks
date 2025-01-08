@@ -32,115 +32,6 @@
     "resource_type": "iam_policy",
     "tags": {}
   },
-  "task11_api": {
-    "resource_type": "api_gateway",
-    "authorizers": {
-      "authorizer": {
-        "type": "COGNITO_USER_POOLS",
-        "identity_source": "method.request.header.Authorization",
-        "user_pools": [
-          "${booking_userpool}"
-        ],
-        "ttl": 300
-      }
-    },
-    "deploy_stage": "api",
-    "dependencies": [
-      {
-        "resource_name": "api_handler",
-        "resource_type": "lambda"
-      }
-    ],
-    "resources": {
-      "/signup": {
-        "enable_cors": true,
-        "POST": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "NONE",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        }
-      },
-      "/signin": {
-        "enable_cors": true,
-        "POST": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "NONE",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        }
-      },
-      "/tables": {
-        "enable_cors": true,
-        "POST": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "authorizer",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        },
-        "GET": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "authorizer",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        }
-      },
-      "/tables/{tableId}": {
-        "enable_cors": true,
-        "GET": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "authorizer",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        }
-      },
-      "/reservations": {
-        "enable_cors": true,
-        "GET": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "authorizer",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        },
-        "POST": {
-          "enable_proxy": true,
-          "integration_request_body_template": {},
-          "authorization_type": "authorizer",
-          "integration_type": "lambda",
-          "method_request_parameters": {},
-          "default_error_pattern": true,
-          "integration_passthrough_behavior": "WHEN_NO_TEMPLATES",
-          "lambda_name": "api_handler"
-        }
-      }
-    },
-    "minimum_compression_size": 0,
-    "tags": {}
-  },
   "${tables_table}": {
     "resource_type": "dynamodb_table",
     "hash_key_name": "id",
@@ -178,6 +69,20 @@
         "ALLOW_ADMIN_USER_PASSWORD_AUTH",
         "ALLOW_REFRESH_TOKEN_AUTH"
       ]
+    },
+    "tags": {}
+  },
+  "api-ui-hoster": {
+    "resource_type": "s3_bucket",
+    "acl": "private",
+    "location": "eu-central-1",
+    "cors": [],
+    "policy": {},
+    "public_access_block": {
+      "block_public_acls": true,
+      "ignore_public_acls": true,
+      "block_public_policy": true,
+      "restrict_public_buckets": true
     },
     "tags": {}
   }
