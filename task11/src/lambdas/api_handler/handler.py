@@ -64,6 +64,9 @@ class ApiHandler(AbstractLambda):
         Main dispatch for the API endpoints.
         """
         _LOG.info("Lambda event: %s", json.dumps(event))
+        _LOG.info("DEBUG: resource=%s, path=%s, method=%s", 
+          event.get('resource'), event.get('path'), event.get('httpMethod'))
+
         method = event.get('httpMethod')
         path = event.get('resource')
         body = {}
