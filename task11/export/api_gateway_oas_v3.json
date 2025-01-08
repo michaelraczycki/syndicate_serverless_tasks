@@ -64,11 +64,6 @@
               }
             }
           },
-          "security": [
-            {
-              "authorizer": []
-            }
-          ],
           "x-amazon-apigateway-integration": {
             "httpMethod": "GET",
             "uri": "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${account_id}:function:api_handler:${lambdas_alias_name}/invocations",
@@ -140,11 +135,6 @@
               }
             }
           },
-          "security": [
-            {
-              "authorizer": []
-            }
-          ],
           "x-amazon-apigateway-integration": {
             "httpMethod": "POST",
             "uri": "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${account_id}:function:api_handler:${lambdas_alias_name}/invocations",
@@ -240,11 +230,6 @@
               }
             }
           },
-          "security": [
-            {
-              "authorizer": []
-            }
-          ],
           "x-amazon-apigateway-integration": {
             "httpMethod": "GET",
             "uri": "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${account_id}:function:api_handler:${lambdas_alias_name}/invocations",
