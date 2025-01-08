@@ -356,6 +356,7 @@ class ApiHandler(AbstractLambda):
     def create_reservation(self, body: dict):
         """
         Create a new reservation item in DynamoDB.
+        Checks for overlapping reservations and rejects if a collision is found.
         """
         _LOG.info("Request to create a new reservation. Body: %s", body)
         table_number = body.get('tableNumber')
@@ -380,6 +381,8 @@ class ApiHandler(AbstractLambda):
                 "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Missing required reservation fields.'})
             }
+
+        # Check if tableNumber actually exists
         try:
             check_resp = tables_table.scan(
                 FilterExpression=Attr("number").eq(int(table_number))
@@ -392,7 +395,6 @@ class ApiHandler(AbstractLambda):
                     "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                     "body": json.dumps({'message': f"Table number {table_number} does not exist."})
                 }
-
         except Exception as e:
             _LOG.error("Error checking table existence by 'number': %s", str(e))
             _LOG.exception(e)
@@ -420,13 +422,10 @@ class ApiHandler(AbstractLambda):
                     )
                     return {
                         "statusCode": 400,
-                        "headers": {
-                            "statusCode": 400,
-                            "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
-                            "body": json.dumps({
-                                'message': f"Time overlap for table {table_number} on {date_val}."
-                            })
-                        }
+                        "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
+                        "body": json.dumps({
+                            'message': f"Time overlap for table {table_number} on {date_val}."
+                        })
                     }
         except Exception as e:
             _LOG.error("Error checking for overlapping reservations: %s", str(e))
@@ -469,7 +468,6 @@ class ApiHandler(AbstractLambda):
                 "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
                 "body": json.dumps({'message': 'Unable to create reservation.'})
             }
-
 
 HANDLER = ApiHandler()
 
